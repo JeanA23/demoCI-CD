@@ -1,19 +1,17 @@
 package com.test.demo.services;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.test.demo.dtos.AccountResponseDto;
 import com.test.demo.dtos.LoginRequestDTO;
 import com.test.demo.dtos.RegisterRequestDTO;
-import com.test.demo.entities.Role;
 import com.test.demo.entities.User;
 import com.test.demo.repositories.UserRepository;
 
@@ -26,6 +24,7 @@ public class AutenticationService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final AuthenticationManager authenticationManager;
+	private final JwtService jwtService;
 	
 	
 	public ResponseEntity<AccountResponseDto> register(RegisterRequestDTO registerUser) {
@@ -57,7 +56,10 @@ public class AutenticationService {
 	
 	public ResponseEntity<AccountResponseDto> login(LoginRequestDTO loginUser) {
 		
-		try {
+			
+			var user = userRepository.findByEmail(loginUser.getEmail()).orElseThrow(
+					
+					() -> new UsernameNotFoundException("Utilisateur introuvable"));
 			
 			Authentication authentication = authenticationManager
 					.authenticate(new UsernamePasswordAuthenticationToken(
@@ -67,14 +69,19 @@ public class AutenticationService {
 									
 									));
 			
-			System.out.println("$$$$$ auth : " + authentication);
+			var jwtToken = jwtService.generateToken(user);
 			
-		} catch (Exception e) {
+			HttpHeaders responseHeaders = new HttpHeaders();
+			responseHeaders.add("Acces-Control-Expose-Headers", "Authorization");
+			responseHeaders.add("Authorization", "Bearer " + jwtToken);
 			
-			System.out.println("$$$$$ err : " + e);
-		}
-		
-		return null;
+			
+		return ResponseEntity.ok()
+				.headers(responseHeaders)
+				.body(AccountResponseDto.builder()
+						.message("Utilisateur authentifié avec succès")
+						.token(jwtToken)
+						.build());
 		
 	}
 }
