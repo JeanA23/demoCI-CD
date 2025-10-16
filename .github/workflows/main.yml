@@ -2,11 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: 
-		- main
+    branches: [ main ]
   pull_request:
-    branches:
-		- main
+    branches: [ main ]
 
 jobs:
   build:
@@ -25,6 +23,6 @@ jobs:
     - name: Build with Maven
       run: mvn clean package -DskipTests
       env:
-        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }} >> $GITHUB_ENV
+        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
         SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
         SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
